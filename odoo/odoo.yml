@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: odoo-deployment
+  labels:
+    app: odoo
+    env: prod
+  namespace: icgroup
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: odoo
+  template:
+    metadata:
+      labels:
+        app: odoo
+    spec:
+      containers:
+      - name: odoo
+        image: odoo
+        ports:
+        - containerPort: 8069
+        env:
+        - name: HOST
+          value: postgres
+        - name: USER
+          value: admin
+        - name: PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: odoo-secret
+              key: odoo-password
+        volumeMounts:
+        - name: odoo-persistent-storage
+          mountPath: /etc/odoo
+        - name: lib-odoo-persistent-storage
+          mountPath: /var/lib/odoo
+        - name: extra-addons-persistent-storage
+          mountPath: /mnt/extra-addons
+      volumes:
+      - name: odoo-persistent-storage
+        hostPath:
+          path: /data_docker/config
+      - name: extra-addons-persistent-storage
+        hostPath:
+            path: /data_docker/addons
+      - name: lib-odoo-persistent-storage
+        persistentVolumeClaim:
+          claimName: odoo-pv-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: odoo-service
+  labels:
+    app: odoo
+    env: prod
+  namespace: icgroup
+spec:
+  type: NodePort
+  selector:
+    app: odoo
+  ports:
+    - protocol: TCP
+      port: 8069
+      targetPort: 8069
+      nodePort: 30009

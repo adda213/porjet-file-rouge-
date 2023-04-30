@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  namespace : icgroup
+  name: pgadmin-pv
+  labels:
+    type: local
+    app: pgadmin
+    env: prod
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/data_k8s/pgadmin4" 

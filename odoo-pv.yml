@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  namespace : icgroup
+  name: odoo-pv-volume
+  labels:
+    type: local
+    app: odoo
+    env: prod
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/data/postgre-volume" 

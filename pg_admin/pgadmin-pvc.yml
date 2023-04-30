@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim # Create PVC
+metadata:
+  namespace: icgroup
+  name: pgadmin-pvc # Sets name of PV
+  labels: 
+    app: pgadmin
+    env: prod
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany # Sets read and write access
+  resources:
+    requests:
+      storage: 1Gi # Sets volume size
