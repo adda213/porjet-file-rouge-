@@ -19,7 +19,7 @@ pipeline {
              agent any
              steps {
                 script {
-                     docker ps -a | grep -i ${IMAGE_NAME} && docker rm -f $IMAGE_NAME:$IMAGE_TAG
+                     docker ps -a | grep -i $IMAGE_NAME && docker rm -f ${IMAGE_NAME}:${IMAGE_TAG}
                   sh '''
                      docker run --name $IMAGE_NAME -d -p 80:8080 ${DOCKERHUB_ID}/$IMAGE_NAME:$IMAGE_TAG
                      sleep 5
