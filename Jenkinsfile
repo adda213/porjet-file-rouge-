@@ -11,7 +11,7 @@ pipeline {
              agent any
              steps {
                 script {
-                  sh 'docker build --no-cache -f ./ic-webapp/ -t ${DOCKERHUB_ID}/$IMAGE_NAME:$IMAGE_TAG .'  
+                  sh 'docker build --no-cache -f ./ic-webapp/Dockerfile -t ${DOCKERHUB_ID}/$IMAGE_NAME:$IMAGE_TAG .'  
                 }
              }
          }
