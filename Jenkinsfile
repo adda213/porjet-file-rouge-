@@ -53,7 +53,7 @@ pipeline {
              agent any
              steps {   script {
                   sh '''
-                     docker login -u ${DOCKERHUB_ID} --password-stdin
+                     echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_ID --password-stdin
                      docker push ${DOCKERHUB_ID}/$IMAGE_NAME:$IMAGE_TAG
                   '''  
                 }
