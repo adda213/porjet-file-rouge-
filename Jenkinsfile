@@ -4,6 +4,7 @@ pipeline {
        DOCKERHUB_ID = "adda213"
        IMAGE_NAME = "ic-webapp" 
        IMAGE_TAG = "latest"
+       DOCKERHUB_PASSWORD = credentials('dockerhub_password')
      }
      agent none
      stages {
