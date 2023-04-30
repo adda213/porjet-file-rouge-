@@ -1,7 +1,7 @@
 @Library('adda213-share-library')_
 pipeline {
      environment {
-       DOCKERHUB_ID = adda213
+       DOCKERHUB_ID = "adda213"
        IMAGE_NAME = "ic-webapp" 
        IMAGE_TAG = "latest"
      }
