@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: postgres:10
+          image: postgres:15
           env:
           - name: POSTGRES_DB
             value: postgres
@@ -38,7 +38,7 @@ spec:
       volumes:
       - name: postgredb
         hostPath:
-          path: /data/postgres
+          path: /data1/postgres
 ---
 apiVersion: v1
 kind: Service

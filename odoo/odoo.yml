@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: odoo
-        image: odoo
+        image: odoo:15
         ports:
         - containerPort: 8069
         env:
@@ -65,4 +65,4 @@ spec:
     - protocol: TCP
       port: 8069
       targetPort: 8069
-      nodePort: 30009
+      nodePort: 30010

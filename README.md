@@ -1,18 +1,18 @@
 
-# WORDPRESS WITH K8S PROJECT
+# projet file rouge : partie 1" ( déploiement du site web ODOO par orchestration en K8S)
 
-Dans ce repository se trouve un ensemble de manifestes qui permettra de déployer des applications type frontend (WordPress) et backend (MySQL) et mettre en œuvre les services qui établirons la connexion entre les deux, le déploiement se fait à l'aide de Kubernetes pour orchestrer nos applications (scalabilité, nombre de réplicas ... etc.) 
+dans le cadre de la formation de EAZYTRAINING , il nous a été demandé de mettre en place le site web vitrine que nous avons créé dans la partie 1 à l'aide de dockerfile , ce site nous permettre de nous réorienter vers deux site web ODOO PG_ADMIN, la mise en place de ces 3 site web doit respecter une architecture proposée dans l'énoncé du projet que vous trouverez [ici](https://github.com/sadofrazer/ic-webapp "ici")
 
-<p align="center">
-  <img src="https://github.com/adda213/mini-projet-K8S/assets/123883398/4ce7c815-98de-45a9-bc6a-54aa2a6e6a7e">
-</p>
+
+
+nous commençons par les étapes qui nous permettra de déployer notre architecture 
 
 ## architecture du projet 
 
 Les applications ou services seront déployées dans un cluster Minikube, donc à un seul nœud et devront respecter l’architecture suivante.
 
-<p align="center">
-  <img src="https://github.com/adda213/mini-projet-K8S/assets/123883398/2fd5d391-9fb0-4223-8ffb-ed1c5ec427ca">
+<<p align="center">
+  <img src="https://github.com/sadofrazer/ic-webapp/blob/master/images/synoptique_Kubernetes.jpeg">
 </p>
 ------------
 
@@ -21,225 +21,89 @@ par la suite les manifestes doivent être crées comme suit :
 
 ## 1- création de NAMESPACE
 
-la création du Name space se fait par la création d'un manifeste de type YAML, cela permettra de créer un espace de travail spécifique pour ce projet 
+la création du Namespace se fait par la création d'un manifeste de type YAML, cela permettra de créer un espace de travail spécifique pour ce projet 
 
 ```yaml
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: wordpress
+  name: icgroup
   labels:
-    name: wordpress
+    name: prod
 ```
-## 2- création de PVC (Persistant Volume Claim) pour le Backend et Frontend 
+## 2- création de la partie BACKEND
 
-le PVC est une demande de stockage par un utilisateur, cela est essentiel pour les deux déploiements pour permettre le stockage et la lecture des donnés (dans ce cas localement).
-PS : le PV est une pièce de stockage dans le cluster provisionné par l’administrateur, cette section est décalée dans le même manifeste de déploiement.
+notre application ODOO nécessite le déploiement d'une base de données POSTGRES , cela est nécessaire pour le stockage des données entrée par le site de ODOO .
+le déploiement du BD nécessite de déployer les éléments suivants sous forme de manifestes YAML: 
+- service ClusterIP : cela rendre la DB disponible aux applications qui se trouve dans le même namespace .
+- le secret : un manifeste qui permettre de sécuriser le mot de passe de notre DB
+- le manifeste de configuration : permettre de définir les variables d'environnement qui permettre la connexion avec la BD
+- le manifeste de déploiement : permettre de lancer notre application avec les paramètres que nous avons défini ( image, port , nombre de réplicas…ETC) 
 
-
-```yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: mysql-pv-claim
-  labels:
-    app: wordpress
-  namespace : wordpress
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 20Gi
-```
-
-
-```yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: mysql-pv-claim
-  labels:
-    app: wordpress
-  namespace : wordpress
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 20Gi
-```
-## 3- création des déploiement MySQL et WORDPRESS 
-
-dans cette étape du projet, 2 déploiements doivent être créer pour chacune des application (frontend et backend), à savoir et à ne pas oublier : 
-  - MySQL : 
-      * il faut déclarer les variables d'environnement qui permettre à WordPress de se connecter à la base de données (`MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_RANDOM_ROOT_PASSWORD`)
-      * déclare le service de type CLUSTERIP, pour rendre le backend visible pour les autres applications qui se trouve dans le même cluster
-      * déclarer le fichier secret qui contient les mots de passe de la base de données 
-```yaml deployment 
-# MySQL + CLUSTERIP + PV
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: wordpress
-  labels:
-    app: wordpress
-  namespace : wordpress
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: wordpress
-      tier: frontend
-  strategy:
-    type: Recreate
-  template:
-    metadata:
-      labels:
-        app: wordpress
-        tier: frontend
-    spec:
-       containers:
-       - image: wordpress:latest
-         name: wordpress
-         env:
-         - name: WORDPRESS_DB_HOST
-           value: mysql-dep
-         - name: WORDPRESS_DB_USER
-           value: wordpress
-         - name: WORDPRESS_DB_NAME
-           value: wordpress
-         - name: WORDPRESS_DB_PASSWORD
-           valueFrom:
-             secretKeyRef:
-               name: mysql-secret
-               key: wordpress_db_password
-         ports:
-         - containerPort: 80
-           name: wordpress
-         volumeMounts:
-         - name: wordpress-persistent-storage
-           mountPath: /var/www/html
-       volumes:
-       - name: wordpress-persistent-storage
-         persistentVolumeClaim:
-           claimName: wp-pv-claim
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: service-wordpress
-  labels: 
-    app: wordpress
-  namespace : wordpress
-spec:
-  type: NodePort
-  selector:
-    app: wordpress
-    tier: frontend
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
-      nodePort: 30008
-```   
-```yaml
-
-# fichier SECRET  
-apiVersion: v1
-data:
-  login: YWRkYQ==
-  mysql_password: YWRkYQ==
-  wordpress_db_password: YWRkYQ==
-  mysql_random_root_password: YWRkYQ==
-kind: Secret
-metadata:
-  name: mysql-secret
-  namespace: wordpress
-type: Opaque
-```
-
-  - WORDPRESS : 
-      * il faut declarer les variables d'environnement qui permettre à WordPress de se connecter à la base de données (`WORDPRESS_DB_HOST`, `WORDPRESS_DB_USER`, `WORDPRESS_DB_NAME`, `WORDPRESS_DB_PASSWORD`)
-      * la valeur de `WORDPRESS_DB_HOST` doit être identique au nom de service de CLUSTERIP pour le Frontend (dans ce cas `mysql-dep`)
-      * déclarer le service de type Node Port, pour rendre le frontend accessible depuis l'extérieur
-      * declarer les secrets dans le même ficher secret crée pour le backend
-
-```yaml
-# WORDPRESS + NODEPORT + PV
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: wordpress
-  labels:
-    app: wordpress
-  namespace : wordpress
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: wordpress
-      tier: frontend
-  strategy:
-    type: Recreate
-  template:
-    metadata:
-      labels:
-        app: wordpress
-        tier: frontend
-    spec:
-       containers:
-       - image: wordpress:latest
-         name: wordpress
-         env:
-         - name: WORDPRESS_DB_HOST
-           value: mysql-dep
-         - name: WORDPRESS_DB_USER
-           value: wordpress
-         - name: WORDPRESS_DB_NAME
-           value: wordpress
-         - name: WORDPRESS_DB_PASSWORD
-           valueFrom:
-             secretKeyRef:
-               name: mysql-secret
-               key: wordpress_db_password
-         ports:
-         - containerPort: 80
-           name: wordpress
-         volumeMounts:
-         - name: wordpress-persistent-storage
-           mountPath: /var/www/html
-       volumes:
-       - name: wordpress-persistent-storage
-         persistentVolumeClaim:
-           claimName: wp-pv-claim
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: service-wordpress
-  labels: 
-    app: wordpress
-  namespace : wordpress
-spec:
-  type: NodePort
-  selector:
-    app: wordpress
-    tier: frontend
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
-      nodePort: 30008
-```
-## 4- DEPLOIEMENT DES MANIFESTS 
-
-après la création de tous les manifestes, il ne reste qu'à appliquer tous les fichiers, soit par utiliser un fichier de kustumisation.yml, ou bien comme dans ce cas à appliquer la commande suivante dans le répertoire des manifestes : 
+tous ces manifestes sont classés dans un dossier POSTGRES , pour lancer la DB , il faut se rendre dans le dossier postgres sur le terminal et exécuter la commande suivante : 
 
 ```
-kubebctl apply -f ./
+kubectl apply -f .
 ```
+## 3- création de la partie FRONTEND
+### 1- déploiement de site web vitrine ic-webapp:
 
-le résultat doit être comme suit : 
+le site web vitrine nécessite que là l'image que nous avons Builder dans la partie 1' est stocké dans la machine local , ou disponible sur docker hub , cela permettre à K8S de récupérer cette image et déployer un pod a la base de cette dernière , le déploiement de ce site nécessite les éléments suivants : 
+- le service Node PORT: ce service rendre notre application disponible à l'extérieur sur le port que nous avons défini sur cette partie
+- le manifeste de déploiement : permettre de lancer notre application avec les paramètres que nous avons défini ( image, port , nombre de réplicas…ETC) , et les deux variables qui nous permettre d'accéder à nos deux site web : ODOO_URL et PGADMIN_URL avec les bon adresse IP et port
+  
+tous ces manifestes sont classés dans un dossier ic-webapp , pour lancer notre site vitrine , il faut se rendre dans le dossier ic-webapp sur le terminal et exécuter la commande suivante : 
 
-![image](https://github.com/adda213/mini-projet-K8S/assets/123883398/291f7651-10d4-44dd-ac65-3e5978459b71)
+```
+kubectl apply -f .
+```
+   
+### 2- deployment de ODOO:
+
+le déploiement de ODOO se fait par la mise en place des éléments suivant :
+- le service Node PORT: pour rendre notre application disponible sur le port que nous avons déclaré dans cette partie 
+- le PV et PVC : PV stockage dans le cluster qui a été provisionné par un administrateur , PVC est une demande de stockage par un utilisateur pour consommer les ressources PV
+- le secret : un manifeste qui permettre de sécuriser le mot de passe pour accéder au DB
+- le manifeste de déploiement : permettre de lancer notre application avec les paramètres que nous avons défini ( image, port , nombre de réplicas…ETC) et déclarer aussi les bonnes valeurs pour connecter à la DB 
+- permission aux répertoires : il faut créer attribuer les droits à tous les répertoires que nous avons déclaré dans nos fichier YAML avant d'exécuter ( dans les hostpath ) avec la commande suivante :
+```
+sudo mkdir -p /data/postgre-volume /data_docker/addons /data_docker/config
+sudo chmod -R 777 /data/postgre-volume /data_docker/addons /data_docker/config
+```
+tous ces manifestes sont classés dans un dossier ODOO , pour lancer notre site ODOO , il faut se rendre dans le dossier ODOO sur le terminal et exécuter la commande suivante : 
+
+```
+kubectl apply -f .
+```  
+
+### 2- deployment de ODOO:
+
+le déploiement de PGADMIN, c'est un site web qui permettre de consulter et manager la DB que nous avons rempli à l'aide de ODOO , le déploiement se fait par la mise en place des éléments suivants :
+
+- le service Node PORT: pour rendre notre application disponible sur le port que nous avons déclaré dans cette partie 
+- le PV et PVC : PV stockage dans le cluster qui a été provisionné par un administrateur , PVC est une demande de stockage par un utilisateur pour consommer les ressources PV
+- le secret : un manifeste qui permettre de sécuriser le mot de passe pour accéder au DB
+- le manifeste de déploiement : permettre de lancer notre application avec les paramètres que nous avons défini ( image, port , nombre de réplicas…ETC) et déclarer aussi les bonnes valeurs pour connecter à la DB 
+- permission aux répertoires : il faut créer attribuer les droits à tous les répertoires que nous avons déclaré dans nos fichiers YAML avant d'exécuter ( dans les hostpath ) avec la commande suivante :
+```
+sudo mkdir -p /data_k8s/pgadmin4
+sudo chmod -R 777 /data_k8s/pgadmin4
+```
+tous ces manifestes sont classés dans un dossier pg_admin , pour lancer notre site pg_admin , il faut se rendre dans le dossier pg_admin sur le terminal et exécuter la commande suivante : 
+```
+kubectl apply -f .
+```  
+
+le résultat doit être comme suit :
+
+
+![image](https://github.com/adda213/projet-file-rouge-partie-2/assets/123883398/a9478483-3b29-47b5-bda8-b0322d5f3c15)
+
+
+![image](https://github.com/adda213/projet-file-rouge-partie-2/assets/123883398/3dacefd6-76eb-423f-8e54-75b7e1c5f06e)
+
+FIN  
+
+nom : KADDOUR BRAHIM  
+Prénom : Adda Zouaoui  
+Formation : Eazytrainning BOOTCAMP-12  
