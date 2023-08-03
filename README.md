@@ -3,9 +3,7 @@
 
 dans le cadre de la formation de EAZYTRAINING , il nous a été demadné de mettre en place le site web vitrine que nous avons crée dans la partie 1 a l'aide de dockerfile , ce site nous premettre de nous reorienter ver deux site web ODOO PG_ADMIN, la mise en place de ces 3 site web doit respecter un architecture proposé dans l'énoncé du projet que vous trouverez [ici](https://github.com/sadofrazer/ic-webapp "ici")
 
-<p align="center">
-  <img src="https://github.com/sadofrazer/ic-webapp/blob/master/images/synoptique_Kubernetes.jpeg">
-</p>
+
 
 nous commoncons par les étapes qui nous permttra de deployer notre archicteture 
 
@@ -13,8 +11,8 @@ nous commoncons par les étapes qui nous permttra de deployer notre archicteture
 
 Les applications ou services seront déployées dans un cluster Minikube, donc à un seul nœud et devront respecter l’architecture suivante.
 
-<p align="center">
-  <img src="https://github.com/adda213/mini-projet-K8S/assets/123883398/2fd5d391-9fb0-4223-8ffb-ed1c5ec427ca">
+<<p align="center">
+  <img src="https://github.com/sadofrazer/ic-webapp/blob/master/images/synoptique_Kubernetes.jpeg">
 </p>
 ------------
 
